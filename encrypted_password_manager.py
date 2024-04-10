@@ -20,40 +20,31 @@ def master_pwd_check():
             print(colored("DATA INTEGRITY CHECK FAILED! Data might have been tampered with.", "red", attrs=["bold"]))
             print("Initiating Program Reset...")
             time.sleep(5)
-            remove_file("Encrypted_Passwords.csv")
-            remove_file("File_Encryption_Key.key")
-            remove_file("Data_Checksum.txt")
-            remove_file("Key_Checksum.txt")
+            program_reset()
             os.system('cls' if os.name == 'nt' else 'clear')
             master_pwd_set()
         else:
             pwd_error_count = 0
             while pwd_error_count < 3:
-                with open("Encrypted_Passwords.csv", "r") as file:
-                    reader = csv.DictReader(file)
-                    for row in reader:
-                        if row["Tag"] == "Master Password":
-                            master_pwd = maskpass.advpass(prompt="Enter the Master Password: ", mask="*").strip()
-                            if row["Password"] == hash_txt_encode(master_pwd):
-                                return True
-                            else:
-                                time.sleep(0.25)
-                                if pwd_error_count == 0:
-                                    print(f"ACCESS DENIED, 2 tries left before program is reset and all data is erased.\n")
-                                elif pwd_error_count == 1:
-                                    print(f"ACCESS DENIED, 1 try left before program is reset and all data is erased.\n")
-                                pwd_error_count += 1
+                with open("Master_Password.key", "r") as file:
+                    master_pwd = maskpass.advpass(prompt="Enter the Master Password: ", mask="*").strip()
+                    if file.read() == hash_txt_encode(master_pwd):
+                        file_decrypt()
+                        return True
+                    else:
+                        time.sleep(0.25)
+                        if pwd_error_count == 0:
+                            print(f"ACCESS DENIED, 2 tries left before program is reset and all data is erased.\n")
+                        elif pwd_error_count == 1:
+                            print(f"ACCESS DENIED, 1 try left before program is reset and all data is erased.\n")
+                        pwd_error_count += 1
             if pwd_error_count == 3:
                 try:
                     time.sleep(1)
-                    remove_file("Encrypted_Passwords.csv")
-                    remove_file("File_Encryption_Key.key")
-                    remove_file("Data_Checksum.txt")
-                    remove_file("Key_Checksum.txt")
+                    program_reset()
                 except Exception as e:
                     file_encrypt()
-                    save_checksum("Encrypted_Passwords.csv")
-                    save_checksum("File_Encryption_Key.key")
+                    save_checksums()
                     sys.exit(colored(f"ERROR HAS OCCURRED: {e}", "red", attrs=["bold"]))
                 sys.exit(colored("\nExceeded number of incorrect tries! PROGRAM HAS BEEN RESET. DATA CLEARED.", "red", attrs=["bold"]))
     except FileNotFoundError:
@@ -72,17 +63,18 @@ Your Master Password must have:
         master_pwd = input("Set your Master Password: ").strip()
         if re.match(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@_$%^&*-]).{8,100}$', master_pwd):
             master_pwd_re = maskpass.advpass(prompt="Retype the Master Password: ", mask="*").strip()
-            master_pwd_hash = hash_txt_encode(master_pwd)
             if master_pwd == master_pwd_re:
+                master_pwd_hash = hash_txt_encode(master_pwd)
                 break
             else:
                 print("Passwords didn't match. Please try again.\n")
         else:
-            print("Invalid Password. Please try again.\n")
+            print("Invalid Password. Please follow the specified password requirements. Please try again.\n")
     with open("Encrypted_Passwords.csv", "a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
         writer.writeheader()
-        writer.writerow({"Tag": "Master Password", "UserID": "Admin", "Password": master_pwd_hash, "Key": None})
+    with open("Master_Password.key", "w") as file:
+        file.write(master_pwd_hash)
     print(colored("\nMASTER PASSWORD SET SUCCESSFULLY!\n", "green", attrs=["bold"]))
     time.sleep(0.25)
 
@@ -112,9 +104,8 @@ def view_pwd():
     with open("Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if row["Tag"] != "Master Password":
-                data.append([row["Tag"].title(), text_decrypt(row["UserID"].encode(), row["Key"].encode()),
-                             text_decrypt(row["Password"].encode(), row["Key"].encode())])
+            data.append([row["Tag"].title(), text_decrypt(row["UserID"].encode(), row["Key"].encode()),
+                         text_decrypt(row["Password"].encode(), row["Key"].encode())])
     os.system('cls' if os.name == 'nt' else 'clear')
     time.sleep(0.25)
     print(colored("PASSWORDS FETCHED SUCCESSFULLY!", "green", attrs=["bold"]))
@@ -249,38 +240,21 @@ def hash_txt_encode(txt):
 
 
 def data_check():
-    if checksum_check("File_Encryption_Key.key") is False:
-        return False
-    if checksum_check("Encrypted_Passwords.csv") is False:
-        return False
-    file_decrypt()
-    master_pwd_exists = False
-    with open("Encrypted_Passwords.csv", "r") as file:
+    data_intact = True
+    with open("Checksums.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if row["Tag"] == "Master Password":
-                if row["UserID"] == "Admin":
-                    master_pwd_exists = True
-    if master_pwd_exists:
+            if row["Checksum"].strip():
+                stored_checksum = row["Checksum"].strip()
+            else:
+                stored_checksum = None
+            if stored_checksum is not None and file_tamper_check(stored_checksum, row["File Path"]):
+                data_intact = False
+                break
+    if data_intact:
         return True
     else:
         return False
-
-
-def checksum_check(path):
-    try:
-        if "key" in path:
-            checksum_path = "Key_Checksum.txt"
-        else:
-            checksum_path = "Data_Checksum.txt"
-        with open(checksum_path, "r") as file:
-            stored_checksum = file.read().strip()
-    except FileNotFoundError:
-        stored_checksum = None
-    if stored_checksum is not None and file_tamper_check(stored_checksum, path):
-        return False
-    else:
-        return True
 
 
 def file_tamper_check(stored_checksum, path):
@@ -296,14 +270,13 @@ def calculate_checksum(path):
     return hash.hexdigest()
 
 
-def save_checksum(path):
-    checksum = calculate_checksum(path)
-    if "key" in path:
-        with open("Key_Checksum.txt", "w") as file:
-            file.write(checksum)
-    else:
-        with open("Data_Checksum.txt", "w") as file:
-            file.write(checksum)
+def save_checksums():
+    with open("Checksums.csv", "w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=["File Path", "Checksum"])
+        writer.writeheader()
+        writer.writerow({"File Path": "Encrypted_Passwords.csv", "Checksum": calculate_checksum("Encrypted_Passwords.csv")})
+        writer.writerow({"File Path": "Master_Password.key", "Checksum": calculate_checksum("Master_Password.key")})
+        writer.writerow({"File Path": "File_Encryption_Key.key", "Checksum": calculate_checksum("File_Encryption_Key.key")})
 
 
 def text_encrypt(txt: bytes, key: bytes):
@@ -343,7 +316,7 @@ def passwords_exist():
         reader = csv.DictReader(file)
         for row in reader:
             pwd_tags.append(row["Tag"])
-    if len(pwd_tags) >= 2:
+    if len(pwd_tags) >= 1:
         return True
     else:
         print(colored("\nOperation can't be performed as NO PASSWORDS HAVE BEEN SAVED!", "red", attrs=["bold"]))
@@ -368,6 +341,13 @@ def remove_file(path):
         os.remove(path)
     except FileNotFoundError:
         pass
+
+
+def program_reset():
+    remove_file("Encrypted_Passwords.csv")
+    remove_file("Master_Password.key")
+    remove_file("File_Encryption_Key.key")
+    remove_file("Checksums.csv")
 
 
 def main():
@@ -458,8 +438,7 @@ def main():
                 time.sleep(0.5)
                 print(colored("\nPROGRAM HAS QUIT SUCCESSFULLY!\n", "red", attrs=["bold"]))
                 file_encrypt()
-                save_checksum("Encrypted_Passwords.csv")
-                save_checksum("File_Encryption_Key.key")
+                save_checksums()
                 break
             else:
                 print("Invalid Operation. Please try again")
@@ -467,8 +446,7 @@ def main():
     except KeyboardInterrupt:
         try:
             file_encrypt()
-            save_checksum("Encrypted_Passwords.csv")
-            save_checksum("File_Encryption_Key.key")
+            save_checksums()
         except FileNotFoundError:
             pass
         sys.exit(colored('\n\nPROGRAM WAS FORCE QUIT DUE TO "KeyBoardInterrupt"!\n', "red", attrs=["bold"]))
