@@ -1,15 +1,18 @@
 # Encrypted Password Manager
 
 ## Overview
-The Encrypted Password Manager is a command-line tool designed to securely manage and store passwords and related information. The program utilizes encryption techniques to securely save sensitive data like UserID's and Passwords.  Apart from encrypting the sensitive data, the program also implements the concept of hashing to check if the saved data has been tampered with. It provides functionalities like adding, generating, updating, viewing, and deleting passwords.
+The Encrypted Password Manager is a command-line tool designed to securely manage and store passwords and related information. The program utilizes encryption techniques to securely save sensitive data like UserID's and Passwords.  Apart from encrypting the sensitive data, the program also implements the concept of hashing to check if the saved data has been tampered with. It provides functionalities like adding, generating, updating, viewing, finding and deleting passwords.
 
 
-## Modules to Install
-The following modules must be installed using `pip` for the program to function as intended:
-- `termcolor`
-- `cryptography`
-- `tabulate`
-
+## Getting Started
+1. Download the Source Code or clone this Repository using:
+```sh
+      git clone https://github.com/adithya-menon-r/Encrypted-Password-Manager.git
+```
+2. Run the following command to install the required modules and libraries:
+```sh
+      pip install -r requirements.txt
+```
 
 ## Project Structure
 The project consists of a single Python script "project.py", which contains all the necessary functions and logic for its implementation. The following is a brief overview of the program and its working:
