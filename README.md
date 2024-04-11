@@ -38,5 +38,8 @@ The project consists of a single Python script `encrypted_password_manager.py`, 
 ## Conclusion
 The Encrypted Password Manager provides a secure and user-friendly solution for managing passwords. Its design prioritizes data integrity, encryption, and user experience, ensuring a reliable and robust password management system.
 
+## License
+This project is licensed under the [MIT LICENSE](LICENSE).
+
 ## Developer
 This project was created and developed by [Adithya Menon R](https://www.linkedin.com/in/adithya-menon-r).
