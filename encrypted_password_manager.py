@@ -160,6 +160,7 @@ def update_pwd(tag):
                 pwd_update = True
                 data[i]["Password"] = text_encrypt(new_pwd.encode(), data[i]["Key"].encode()).decode()
             break
+
     if exact_match is True:
         with open("Encrypted_Passwords.csv", "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
@@ -191,6 +192,7 @@ def delete_pwd(tag):
                 break
             else:
                 return None
+            
     if exact_match is True:
         with open("Encrypted_Passwords.csv", "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
@@ -369,19 +371,23 @@ def main():
             [5, "Update Password"],
             [6, "Delete Password"]
         ]
+
         while True:
             time.sleep(1)
             os.system('cls' if os.name == 'nt' else 'clear')
             print("\nCHOOSE THE DESIRED OPERATION (1/2/3/4/5/6)")
             operation_choice = input(tabulate(operations, tablefmt="rounded_grid") + f"\nPress {colored('Q', 'blue', attrs=['bold'])} to quit the program.\n>> ").lower().strip()
+            
             if operation_choice in ["1", "find", "find password"]:
                 if passwords_exist():
                     tag = input("\nEnter the Password/App Tag to search for: ").strip().lower()
                     find_pwd(tag)
+
             elif operation_choice in ["2", "view", "view all passwords"]:
                 if passwords_exist():
                     time.sleep(0.25)
                     view_pwd()
+
             elif operation_choice in ["3", "add", "add password"]:
                 while True:
                     pwd_tag = input("\nPassword/App Tag: ").strip()
@@ -426,23 +432,28 @@ def main():
                     confirm = input("Proceed with saving data (Yes/No)? -> ").lower().strip()
                     if confirm in ["y", "yes"]:
                         add_pwd(pwd_tag, user_id, gen_pwd)
+
             elif operation_choice in ["5", "update", "update password"]:
                 if passwords_exist():
                     tag = input("\nEnter the Password/App Tag to update: ").strip().lower()
                     update_pwd(tag)
+
             elif operation_choice in ["6", "delete", "del", "delete password"]:
                 if passwords_exist():
                     tag = input("\nEnter the Password/App Tag to delete: ").strip().lower()
                     delete_pwd(tag)
+
             elif operation_choice in ["q", "quit"]:
                 time.sleep(0.5)
                 print(colored("\nPROGRAM HAS QUIT SUCCESSFULLY!\n", "red", attrs=["bold"]))
                 file_encrypt()
                 save_checksums()
                 break
+            
             else:
                 print("Invalid Operation. Please try again")
                 time.sleep(0.5)
+
     except KeyboardInterrupt:
         try:
             file_encrypt()
