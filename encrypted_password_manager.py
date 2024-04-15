@@ -26,7 +26,7 @@ def master_pwd_check():
         else:
             pwd_error_count = 0
             while pwd_error_count < 3:
-                with open("Master_Password.key", "r") as file:
+                with open("Program_Data/Master_Password.key", "r") as file:
                     master_pwd = maskpass.advpass(prompt="Enter the Master Password: ", mask="*").strip()
                     if file.read() == hash_txt_encode(master_pwd):
                         file_decrypt()
@@ -70,10 +70,11 @@ Your Master Password must have:
                 print("Passwords didn't match. Please try again.\n")
         else:
             print("Invalid Password. Please follow the specified password requirements. Please try again.\n")
-    with open("Encrypted_Passwords.csv", "a", newline="") as file:
+    os.mkdir("Program_Data")
+    with open("Program_Data/Encrypted_Passwords.csv", "a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
         writer.writeheader()
-    with open("Master_Password.key", "w") as file:
+    with open("Program_Data/Master_Password.key", "w") as file:
         file.write(master_pwd_hash)
     print(colored("\nMASTER PASSWORD SET SUCCESSFULLY!\n", "green", attrs=["bold"]))
     time.sleep(0.25)
@@ -81,7 +82,7 @@ Your Master Password must have:
 
 def find_pwd(tag):
     exact_match = False
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             if row["Tag"] == tag:
@@ -101,7 +102,7 @@ def find_pwd(tag):
 
 def view_pwd():
     data = [["Tag", "UserID", "Password"]]
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             data.append([row["Tag"].title(), text_decrypt(row["UserID"].encode(), row["Key"].encode()),
@@ -116,7 +117,7 @@ def view_pwd():
 
 
 def add_pwd(tag, user_id, pwd):
-    with open("Encrypted_Passwords.csv", "a", newline="") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
         key = Fernet.generate_key()
         writer.writerow({"Tag": tag.lower(), "UserID": text_encrypt(user_id.encode(), key).decode(), "Password": text_encrypt(pwd.encode(), key).decode(), "Key": key.decode()})
@@ -142,7 +143,7 @@ def update_pwd(tag):
     data = []
     exact_match = False
     pwd_update = False
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             data.append(row)
@@ -162,7 +163,7 @@ def update_pwd(tag):
             break
 
     if exact_match is True:
-        with open("Encrypted_Passwords.csv", "w", newline="") as file:
+        with open("Program_Data/Encrypted_Passwords.csv", "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
             writer.writeheader()
             for pwd_set in data:
@@ -179,7 +180,7 @@ def update_pwd(tag):
 def delete_pwd(tag):
     data = []
     exact_match = False
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             data.append(row)
@@ -194,7 +195,7 @@ def delete_pwd(tag):
                 return None
             
     if exact_match is True:
-        with open("Encrypted_Passwords.csv", "w", newline="") as file:
+        with open("Program_Data/Encrypted_Passwords.csv", "w", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=["Tag", "UserID", "Password", "Key"])
             writer.writeheader()
             for pwd_set in data:
@@ -209,7 +210,7 @@ def delete_pwd(tag):
 
 def get_best_match(tag):
     pwd_tags = []
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             pwd_tags.append(row["Tag"])
@@ -243,7 +244,7 @@ def hash_txt_encode(txt):
 
 def data_check():
     data_intact = True
-    with open("Checksums.csv", "r") as file:
+    with open("Program_Data/Checksums.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             if row["Checksum"].strip():
@@ -273,12 +274,12 @@ def calculate_checksum(path):
 
 
 def save_checksums():
-    with open("Checksums.csv", "w", newline="") as file:
+    with open("Program_Data/Checksums.csv", "w", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=["File Path", "Checksum"])
         writer.writeheader()
-        writer.writerow({"File Path": "Encrypted_Passwords.csv", "Checksum": calculate_checksum("Encrypted_Passwords.csv")})
-        writer.writerow({"File Path": "Master_Password.key", "Checksum": calculate_checksum("Master_Password.key")})
-        writer.writerow({"File Path": "File_Encryption_Key.key", "Checksum": calculate_checksum("File_Encryption_Key.key")})
+        writer.writerow({"File Path": "Program_Data/Encrypted_Passwords.csv", "Checksum": calculate_checksum("Program_Data/Encrypted_Passwords.csv")})
+        writer.writerow({"File Path": "Program_Data/Master_Password.key", "Checksum": calculate_checksum("Program_Data/Master_Password.key")})
+        writer.writerow({"File Path": "Program_Data/File_Encryption_Key.key", "Checksum": calculate_checksum("Program_Data/File_Encryption_Key.key")})
 
 
 def text_encrypt(txt: bytes, key: bytes):
@@ -295,26 +296,26 @@ def text_decrypt(txt: bytes, key: bytes):
 
 def file_encrypt():
     key = Fernet.generate_key()
-    with open("Encrypted_Passwords.csv", "rb") as file_data:
+    with open("Program_Data/Encrypted_Passwords.csv", "rb") as file_data:
         data = file_data.read()
-    with open("File_Encryption_Key.key", "wb") as file_key:
+    with open("Program_Data/File_Encryption_Key.key", "wb") as file_key:
         file_key.write(key)
-    with open("Encrypted_Passwords.csv", "wb") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "wb") as file:
         file.write(text_encrypt(data, key))
 
 
 def file_decrypt():
-    with open("File_Encryption_Key.key", "rb") as file_key:
+    with open("Program_Data/File_Encryption_Key.key", "rb") as file_key:
         key = file_key.read()
-    with open("Encrypted_Passwords.csv", "rb") as file_data:
+    with open("Program_Data/Encrypted_Passwords.csv", "rb") as file_data:
         data = file_data.read()
-    with open("Encrypted_Passwords.csv", "wb") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "wb") as file:
         file.write(text_decrypt(data, key).encode())
 
 
 def passwords_exist():
     pwd_tags = []
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             pwd_tags.append(row["Tag"])
@@ -328,7 +329,7 @@ def passwords_exist():
 
 def tag_exists(tag):
     pwd_tags = []
-    with open("Encrypted_Passwords.csv", "r") as file:
+    with open("Program_Data/Encrypted_Passwords.csv", "r") as file:
         reader = csv.DictReader(file)
         for row in reader:
             pwd_tags.append(row["Tag"].upper())
@@ -338,18 +339,22 @@ def tag_exists(tag):
         return False
 
 
-def remove_file(path):
+def delete_item(path, directory=False):
     try:
-        os.remove(path)
+        if directory:
+            os.rmdir(path)
+        else:
+            os.remove(path)
     except FileNotFoundError:
         pass
 
 
 def program_reset():
-    remove_file("Encrypted_Passwords.csv")
-    remove_file("Master_Password.key")
-    remove_file("File_Encryption_Key.key")
-    remove_file("Checksums.csv")
+    delete_item("Program_Data/Encrypted_Passwords.csv")
+    delete_item("Program_Data/Master_Password.key")
+    delete_item("Program_Data/File_Encryption_Key.key")
+    delete_item("Program_Data/Checksums.csv")
+    delete_item("Program_Data", True)
 
 
 def main():
