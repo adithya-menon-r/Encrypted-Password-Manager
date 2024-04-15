@@ -295,10 +295,10 @@ def text_decrypt(txt: bytes, key: bytes):
 
 def file_encrypt():
     key = Fernet.generate_key()
-    with open("File_Encryption_Key.key", "wb") as file_key:
-        file_key.write(key)
     with open("Encrypted_Passwords.csv", "rb") as file_data:
         data = file_data.read()
+    with open("File_Encryption_Key.key", "wb") as file_key:
+        file_key.write(key)
     with open("Encrypted_Passwords.csv", "wb") as file:
         file.write(text_encrypt(data, key))
 
