@@ -27,7 +27,7 @@ def master_pwd_check():
             pwd_error_count = 0
             while pwd_error_count < 3:
                 with open("Program_Data/Master_Password.key", "r") as file:
-                    master_pwd = maskpass.advpass(prompt="Enter the Master Password: ", mask="*").strip()
+                    master_pwd = maskpass.askpass(prompt="Enter the Master Password: ", mask="*").strip()
                     if file.read() == hash_txt_encode(master_pwd):
                         file_decrypt()
                         return True
@@ -62,7 +62,7 @@ Your Master Password must have:
     while True:
         master_pwd = input("Set your Master Password: ").strip()
         if re.match(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@_$%^&*-]).{8,100}$', master_pwd):
-            master_pwd_re = maskpass.advpass(prompt="Retype the Master Password: ", mask="*").strip()
+            master_pwd_re = maskpass.askpass(prompt="Retype the Master Password: ", mask="*").strip()
             if master_pwd == master_pwd_re:
                 master_pwd_hash = hash_txt_encode(master_pwd)
                 break
